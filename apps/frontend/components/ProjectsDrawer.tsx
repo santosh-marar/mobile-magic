@@ -59,7 +59,7 @@ export function ProjectsDrawer() {
     useEffect(() => {
         // track mouse pointer, open if its on the left ovver the drawer
         const handleMouseMove = (e: MouseEvent) => {
-            if (e.clientX < 10) {
+            if (e.clientX < 40) {
                 setIsOpen(true);
             }
             if (e.clientX > WIDTH) {
