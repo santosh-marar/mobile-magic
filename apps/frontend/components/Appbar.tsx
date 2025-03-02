@@ -5,18 +5,26 @@ import {
     SignedOut,
     UserButton,
 } from "@clerk/nextjs";
-
+import { Button } from "./ui/button";
 
 export function Appbar() {
-  return (
+	return (
 		<div className="relative">
 			<div className="absolute bg-white blur-xl -z-10" />
-			<div className="w-full md:w-5/6 mx-auto flex justify-between border rounded-lg items-center bg-background px-4 py-1 md:py-2 md:px-6">
+			<div className="w-full md:w-5/6 mx-auto flex justify-between border rounded-lg items-center bg-background px-4 py-2 md:py-3 md:px-6">
 				<h1 className="font-space-grotesk font-bold text-xl">Bolty</h1>
-				<div className="flex justify-center items-center size-12">
+				<div className="flex justify-center items-center gap-2">
         <SignedOut>
-            <SignInButton />
-            <SignUpButton />
+            <SignInButton mode="modal">
+              <Button variant="ghost" size="sm" className="cursor-pointer">
+								Sign in
+							</Button>
+						</SignInButton>
+						<SignUpButton mode="modal">
+							<Button variant="default" size="sm" className="cursor-pointer">
+								Sign up
+							</Button>
+						</SignUpButton>
         </SignedOut>
         <SignedIn>
             <UserButton />
