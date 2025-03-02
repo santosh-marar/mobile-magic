@@ -40,7 +40,12 @@ function useProjects() {
                     "Authorization": `Bearer ${token}`
                 }
             })
-            const projectsByDate = response.data.projects.reduce((acc: {[date: string]: Project[]}, project: Project) => {
+
+            const sortedProjects = response.data.projects.sort((a: Project, b: Project) => 
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+           const projectsByDate = sortedProjects.reduce((acc: {[date: string]: Project[]}, project: Project) => {
                 const date = new Date(project.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
                 if (!acc[date]) {
                     acc[date] = [];
@@ -55,6 +60,7 @@ function useProjects() {
 
     return projects;
 }
+
 export function ProjectsDrawer() {
     const projects = useProjects();
     const [isOpen, setIsOpen] = useState(false);
