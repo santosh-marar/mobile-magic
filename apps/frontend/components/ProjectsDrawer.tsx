@@ -98,7 +98,7 @@ export function ProjectsDrawer() {
 						onChange={(e) => setSearchString(e.target.value)}
 					/>
 
-					<DrawerTitle className="text-[12px]">Your projects</DrawerTitle>
+					<DrawerTitle className="font-semibold pl-2 pt-2">Your projects</DrawerTitle>
 					{Object.keys(projects).map((date) => (
 						<div key={date} className="py-2">
 							<h2 className="font-semibold text-xs px-2">{date}</h2>
