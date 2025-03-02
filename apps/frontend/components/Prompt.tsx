@@ -8,6 +8,7 @@ import { useAuth } from "@clerk/nextjs";
 import { BACKEND_URL, WORKER_API_URL } from "@/config";
 import { useRouter } from "next/navigation";
 import { TemplateButtons } from "./TemplateButtons";
+import { toast } from "sonner";
 
 export function Prompt() {
   const [prompt, setPrompt] = useState("");
@@ -27,9 +28,13 @@ export function Prompt() {
 			/>
       {prompt && (
 				<Button
-					className="absolute top-4 right-4"
+					className="absolute top-4 right-4 cursor-pointer"
 					onClick={async () => {
             const token = await getToken();
+            if(!token) {
+              toast.error("You need to be signed in to generate a project");
+              return;
+            };
             const response = await axios.post(
 							`${BACKEND_URL}/project`, {
                 prompt: prompt,
