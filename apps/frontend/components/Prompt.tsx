@@ -7,12 +7,16 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { BACKEND_URL, WORKER_API_URL } from "@/config";
 import { useRouter } from "next/navigation";
+import { TemplateButtons } from "./TemplateButtons";
 
 export function Prompt() {
   const [prompt, setPrompt] = useState("");
   const { getToken } = useAuth();
   const router = useRouter();
 
+  const handleTemplateClick = (text: string) => {
+		setPrompt(text);
+	};
   return (
     <div className="relative">
       <Textarea
@@ -44,6 +48,9 @@ export function Prompt() {
           <Send />
         </Button>
       )}
+      <div className="max-w-2xl mx-auto pt-4">
+				<TemplateButtons onTemplateClick={handleTemplateClick} />
+			</div>
     </div>
   );
 }

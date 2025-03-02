@@ -1,8 +1,5 @@
 import { Appbar } from "@/components/Appbar";
-import { Button } from "@/components/ui/button";
 import { Prompt } from "@/components/Prompt";
-import Image from "next/image";
-import { TemplateButtons } from "@/components/TemplateButtons";
 import { ProjectsDrawer } from "@/components/ProjectsDrawer";
 
 export default function Home() {
@@ -23,9 +20,6 @@ export default function Home() {
           <Prompt />
         </div>
       </div>
-      <div className="max-w-2xl mx-auto pt-4">
-        <TemplateButtons />
-      </div>
-    </div>
+   </div>
   );
 }
