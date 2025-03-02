@@ -56,7 +56,7 @@ function useProjects() {
             setProjects(projectsByDate);
         })()
         
-    }, [getToken])
+    }, [])
 
     return projects;
 }

@@ -4,6 +4,7 @@ import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
+import { Appbar } from "@/components/Appbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,22 +32,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-        <ClerkProvider>
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} antialiased`}
-          >
-            {children}
-            <Toaster/>
-          </body>
-        </ClerkProvider>
-      </ThemeProvider>
-    </html>
-  );
+			<html lang="en">
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					enableSystem
+					disableTransitionOnChange
+				>
+					<ClerkProvider>
+						<body
+							className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} antialiased`}
+						>
+							<main className="relative w-full overflow-hidden">
+								<div className="absolute -top-56 -right-28 size-96 md:w-3xl md:-right-64 md:-top-64 -z-30 rounded-full bg-radial from-red-00 to-red-500 blur-3xl" />
+								<Appbar />
+								{children}
+							</main>
+							<Toaster />
+						</body>
+					</ClerkProvider>
+				</ThemeProvider>
+			</html>
+		);
 }
