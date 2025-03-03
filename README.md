@@ -12,6 +12,7 @@
  - Clone the project
  - Build and run the code-server image
  ```
+    cd apps/code-server
     docker build -t code-server-update .
     docker run -p 8080:8080 -p 8081:8081 code-sever-update
  ```
@@ -30,12 +31,13 @@
     npx prisma migrate dev
     npx prisma generate
  ```
- - Start the frontend
+ - Sign up to clerk, create a new dev app. 
+ - Start the frontend, update .env in apps/frontend
  ```
     cd apps/frontend
     bun dev
  ```
- - Sign up to clerk, create a new dev app. Copy apps/primary-backend/.env.example over to apps/primary-backend/.env, update the clerk credentials
+ - Copy apps/primary-backend/.env.example over to apps/primary-backend/.env, update the clerk credentials
  - Start the primary backend
  - Go to claude and get api keys, update apps/worker/.env
  - Start a single worker locally
