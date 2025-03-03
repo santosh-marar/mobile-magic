@@ -10,6 +10,8 @@
 
 ## Setup procedure
  - Clone the project
+ - git clone https://github.com/code100x/base-react-native-expo.git /tmp/bolty-worker
+ - cd /tmp/bolty-worker && npm install
  - Build and run the code-server image
  ```
     cd apps/code-server
