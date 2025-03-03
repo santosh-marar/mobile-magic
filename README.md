@@ -6,3 +6,40 @@
 - Create a load balancer service that routes requests from id.worker.100xdevs.com to the respective worker for that project
 - Add multiplayer mode
 - Backup folders to S3 (can use s3-mount for this)
+
+
+## Setup procedure
+ - Clone the project
+ - Build and run the code-server image
+ ```
+    docker build -t code-server-update .
+    docker run -p 8080:8080 -p 8081:8081 code-sever-update
+ ```
+ - Install dependencies globally
+ ```
+    bun install
+ ```
+ - Start postgres locally
+ ```
+ docker run -p 5432:5432 -d -e POSTGRES_PASSWORD=mysupersecretpassword postgres
+ ```
+ - Copy packages/db/.env.example over to packages/db/.env
+ - Migrate the db , generate the client
+ ```
+    cd packages/db
+    npx prisma migrate dev
+    npx prisma generate
+ ```
+ - Start the frontend
+ ```
+    cd apps/frontend
+    bun dev
+ ```
+ - Sign up to clerk, create a new dev app. Copy apps/primary-backend/.env.example over to apps/primary-backend/.env, update the clerk credentials
+ - Start the primary backend
+ - Go to claude and get api keys, update apps/worker/.env
+ - Start a single worker locally
+ ```
+    cd apps/worker
+    bun index.ts
+  ```
