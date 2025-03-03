@@ -13,5 +13,8 @@ USER coder
 # Expose code-server's default port
 EXPOSE 8080
 
+RUN wget https://github.com/code100x/remote-vscode-extension/raw/refs/heads/main/bolty-listener-0.0.1.vsix
+RUN code-server --install-extension bolty-listener-0.0.1.vsix
+
 # Start code-server on container launch
 CMD ["code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8080", "/tmp/bolty-worker"]
