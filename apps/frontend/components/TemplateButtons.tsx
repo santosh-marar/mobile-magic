@@ -1,29 +1,35 @@
-import { Button } from "./ui/button";
-import { Camera, FileUp, Figma, Layout, UserPlus, } from "lucide-react"
 
-export function TemplateButtons() {
-  return (
-    <div className="flex flex-wrap justify-center gap-3">
-      <Button variant="outline" className="border-primary/20  bg-transparent text-primary/80 hover:bg-gray-900">
-        <Camera className="mr-2 h-4 w-4" />
-        Build a chess app
-      </Button>
-      <Button variant="outline" className="border-primary/20  bg-transparent text-primary/80 hover:bg-gray-900">
-        <Figma className="mr-2 h-4 w-4" />
-        Create a todo app
-      </Button>
-      <Button variant="outline" className="border-primary/20  bg-transparent text-primary/80 hover:bg-gray-900">
-        <FileUp className="mr-2 h-4 w-4" />
-        Create a docs app
-      </Button>
-      <Button variant="outline" className="border-primary/20  bg-transparent text-primary/80 hover:bg-gray-900">
-        <Layout className="mr-2 h-4 w-4" />
-        Landing Page
-      </Button>
-      <Button variant="outline" className="border-primary/20  bg-transparent text-primary/80 hover:bg-gray-900">
-        <UserPlus className="mr-2 h-4 w-4" />
-        Create a base app
-      </Button>
-    </div>
-  );
+export function TemplateButtons({
+	onTemplateClick,
+}: { onTemplateClick: (text: string) => void }) {
+	return (
+		<div className="w-full flex flex-col justify-center align-middle items-center md:flex-row flex-wrap gap-2 py-8">
+			<TemplateButton
+				text="Build a simple chess app"
+				onClick={onTemplateClick}
+			/>
+			<TemplateButton
+				text="Create a todo app with CRUD"
+				onClick={onTemplateClick}
+			/>
+			<TemplateButton text="Create a docs app" onClick={onTemplateClick} />
+			<TemplateButton text="Draft a Basic app" onClick={onTemplateClick} />
+			<TemplateButton text="Create a Dad jokes app" onClick={onTemplateClick} />
+		</div>
+	);
+}
+
+function TemplateButton({
+	text,
+	onClick,
+}: { text: string; onClick: (text: string) => void }) {
+	return (
+		<span
+			onClick={() => onClick(text)}
+			onKeyUp={(e) => e.key === "Enter" && onClick(text)}
+			onKeyDown={(e) => e.key === "Enter" && onClick(text)}
+			className="w-fit cursor-pointer border border-bolt-elements-borderColor rounded-full bg-gray-50 hover:bg-gray-100 dark:bg-zinc-950 dark:hover:bg-zinc-900 text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary px-3 py-1 text-sm transition-theme">
+			{text}
+		</span>
+	);
 }

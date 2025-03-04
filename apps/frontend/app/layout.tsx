@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "sonner";
+import { Appbar } from "@/components/Appbar";
 import { Providers } from "./provider";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,6 +15,11 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const spaceGrotesk = Space_Grotesk({
+	variable: "--font-space-grotesk",
+	subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
