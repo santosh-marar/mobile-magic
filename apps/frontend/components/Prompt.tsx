@@ -1,10 +1,12 @@
 "use client";
-import { Button } from "./ui/button";
+
+import { Button } from "@/components/ui/button"
+import { Paperclip, Send } from 'lucide-react'
+import { TemplateButtons } from "./TemplateButtons";
 import { Textarea } from "./ui/textarea";
-import { Router, Send } from "lucide-react";
-import axios from "axios";
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import axios from "axios";
 import { BACKEND_URL, WORKER_API_URL } from "@/config";
 import { useRouter } from "next/navigation";
 import { TemplateButtons } from "./TemplateButtons";

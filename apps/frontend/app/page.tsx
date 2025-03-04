@@ -1,8 +1,10 @@
 import { Prompt } from "@/components/Prompt";
 import { ProjectsDrawer } from "@/components/ProjectsDrawer";
+import SideInfo from "@/components/SideInfo";
 
 export default function Home() {
   return (
+
     <div className="p-4 md:pt-8">
       <ProjectsDrawer />
       <div className="max-w-2xl mx-auto pt-32 md:pt-52">

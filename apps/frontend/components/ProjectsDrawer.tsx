@@ -6,8 +6,7 @@ import {
     DrawerFooter,
     DrawerHeader,
     DrawerTitle,
-    DrawerTrigger,
-  } from "@/components/ui/drawer"
+} from "@/components/ui/drawer"
 import { BACKEND_URL } from "@/config";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
@@ -16,8 +15,9 @@ import { useRouter } from "next/navigation";
 import { Input } from "./ui/input";
 import { MATCHED_PATH_HEADER } from "next/dist/lib/constants";
 import { LogOutIcon, MessageSquareIcon } from "lucide-react";
+import { LogOutIcon, MessageCircleIcon, MessageSquareIcon, SearchIcon } from "lucide-react";
 import { Button } from "./ui/button";
- 
+
 const WIDTH = 250;
 
 type Project = {
@@ -27,9 +27,8 @@ type Project = {
 }
 
 function useProjects() {
-    const router = useRouter();
-    const { getToken } = useAuth();
-    const [projects, setProjects] = useState<{[date: string]: Project[]}>({});
+    const { getToken } = useAuth();
+    const [projects, setProjects] = useState<{ [date: string]: Project[] }>({});
     useEffect(() => {
         (async () => {
             const token = await getToken();
@@ -55,8 +54,8 @@ function useProjects() {
             }, {});
             setProjects(projectsByDate);
         })()
-        
-    }, [])
+
+    }, [getToken])
 
     return projects;
 }
@@ -71,6 +70,7 @@ export function ProjectsDrawer() {
         // track mouse pointer, open if its on the left ovver the drawer
         const handleMouseMove = (e: MouseEvent) => {
             if (e.clientX < 50) {
+            if (e.clientX < 40) {
                 setIsOpen(true);
             }
             if (e.clientX > WIDTH) {
@@ -97,7 +97,6 @@ export function ProjectsDrawer() {
 						value={searchString}
 						onChange={(e) => setSearchString(e.target.value)}
 					/>
-
 					<DrawerTitle className="font-semibold pl-2 pt-2">Your projects</DrawerTitle>
 					{Object.keys(projects).map((date) => (
 						<div key={date} className="py-2">
