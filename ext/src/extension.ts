@@ -1,12 +1,43 @@
 import { WebSocket } from 'ws';
 import * as vscode from 'vscode';
+import * as path from 'path';
+
 type AdminMessage = {
-	type: "command" | "update-file"
+	type: "command" | "update-file" | "prompt-start" | "prompt-end"
 	content: string;
 	path?: string;
 };
 
-function initWs() {
+async function ensureFileExists(filePath: string, content: string = '') {
+	try {
+	  const uri = vscode.Uri.file(filePath);
+	  
+	  // Check if the directory exists, create if not
+	  const dirPath = path.dirname(filePath);
+	  try {
+		await vscode.workspace.fs.stat(vscode.Uri.file(dirPath));
+	  } catch {
+		// Directory doesn't exist, create it
+		await vscode.workspace.fs.createDirectory(vscode.Uri.file(dirPath));
+	  }
+  
+	  // Check if file exists
+	  try {
+		await vscode.workspace.fs.stat(uri);
+	  } catch {
+		// File doesn't exist, create it
+		await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+	  }
+  
+	  return uri;
+	} catch (error) {
+	  vscode.window.showErrorMessage(`Error ensuring file exists: ${error}`);
+	  throw error;
+	}
+  }
+  
+
+function initWs(context: vscode.ExtensionContext) {
 	// change to something else
 	const ws = new WebSocket(process.env.WS_RELAYER_URL || "ws://ws-relayer:9093");
 	
@@ -28,12 +59,14 @@ function initWs() {
 		console.log(data);
 		if (data.type === "command") {
 			vscode.commands.executeCommand('extension.sendToAiTerminal', data.content);
-			vscode.commands.executeCommand('extension.sendToAiTerminal', data.content);
 		}
 
 		if (data.type === "update-file") {
-			const document = await vscode.workspace.openTextDocument(data.path!);
+			const fileUri = await ensureFileExists(data.path!, data.content);
+
+			const document = await vscode.workspace.openTextDocument(fileUri);
 			await vscode.window.showTextDocument(document);
+
 			const edit = new vscode.WorkspaceEdit();
 			const range = new vscode.Range(
 				new vscode.Position(0, 0),
@@ -42,6 +75,18 @@ function initWs() {
 
 			edit.replace(document.uri, range, data.content);
 			await vscode.workspace.applyEdit(edit);
+		}
+
+		if (data.type === "prompt-start") {
+			const terminals = vscode.window.terminals;
+			if (terminals.length > 0) {
+				const activeTerminal = vscode.window.activeTerminal;
+				activeTerminal?.sendText('\x03');
+			}
+		}
+
+		if (data.type === "prompt-end") {
+			vscode.commands.executeCommand('extension.sendToAiTerminal', "npm run web");
 		}
 	}
 
@@ -54,9 +99,9 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "bolty-listener" is now active!');
 
 	console.log("activate extension");
-	let ws = initWs();
+	let ws = initWs(context);
 	ws.onerror = (e) => {
-		initWs();	
+		initWs(context);	
 	};
 		
 	const aiTerminal = vscode.window.createTerminal({
