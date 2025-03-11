@@ -36,8 +36,7 @@ export default function ProjectWithInitRequest({
 					},
 				},
 			);
-			// remove search params from url
-			router.push(`/project/${projectId}`);
+			window.location.href = `/project/${projectId}`;
 		})()	
 	}, [projectId, initPrompt, workerUrl, getToken, router]);
 
