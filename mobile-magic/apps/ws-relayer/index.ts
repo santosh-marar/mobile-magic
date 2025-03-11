@@ -1,8 +1,12 @@
 import type { ServerWebSocket } from "bun";
-import type { MessagePayload } from "./types";
+import type { MessagePayload } from "common/types";
 
 //TODO: Add auth
 const SUBSCRIPTIONS: ServerWebSocket<unknown>[] = []
+
+const API_SUBSCRIPTIONS: ServerWebSocket<unknown>[] = []
+
+let bufferedMessages: any[] = []
 
 Bun.serve({
     fetch(req, server) {
@@ -15,14 +19,22 @@ Bun.serve({
     websocket: {
         message(ws, message) {
             const { event, data }: MessagePayload = JSON.parse(message.toString());
-            console.log(event, data);
             if (event === "subscribe") {
                 SUBSCRIPTIONS.push(ws);
-            } else if (event === "admin") {
-                const { message } = data;
-                if (SUBSCRIPTIONS) {
-                    SUBSCRIPTIONS.forEach(ws => ws.send(JSON.stringify(message)));
+                if (bufferedMessages.length) {
+                    SUBSCRIPTIONS.forEach(ws => ws.send(JSON.stringify(bufferedMessages.shift())));
+                    bufferedMessages = [];
                 }
+            } else if (event === "admin") {
+                if (!SUBSCRIPTIONS.length) {
+                    bufferedMessages.push(data);
+                } else {
+                    SUBSCRIPTIONS.forEach(ws => ws.send(JSON.stringify(data)));
+                }
+            } else if (event === "api_subscribe") {
+                API_SUBSCRIPTIONS.push(ws);
+            } else if (event === "vscode") {
+                API_SUBSCRIPTIONS.forEach(ws => ws.send(JSON.stringify(data)));
             }
         },
         open(ws) {

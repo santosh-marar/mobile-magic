@@ -1,0 +1,36 @@
+{
+    # Global options
+}
+
+https://*.cloud.antidevs.com:443 {
+    tls /etc/certs/tls.crt /etc/certs/tls.key
+
+    @session host *.cloud.antidevs.com
+    handle @session {
+        reverse_proxy {http.request.host.labels.3}.user-apps.svc.cluster.local:8080
+    }
+
+    # Fallback: return 404 if nothing else matches
+    handle {
+        respond "Not Found" 404
+    }
+}
+
+https://k8s-orchestrator.antidevs.com:443 {
+    tls /etc/root-certs/tls.crt /etc/root-certs/tls.key
+    
+    reverse_proxy k8s-orchestrator.app.svc.cluster.local:7001
+}
+
+https://app.antidevs.com:443 {
+    tls /etc/root-certs/tls.crt /etc/root-certs/tls.key
+
+    reverse_proxy frontend.app.svc.cluster.local:3000
+}
+
+https://primary-backend.antidevs.com:443 {
+    tls /etc/root-certs/tls.crt /etc/root-certs/tls.key
+
+    reverse_proxy primary-backend.app.svc.cluster.local:9090
+}
+

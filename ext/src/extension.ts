@@ -1,14 +1,51 @@
 import { WebSocket } from 'ws';
 import * as vscode from 'vscode';
+import * as path from 'path';
+
 type AdminMessage = {
-	type: "command" | "update-file"
+	type: "command" | "update-file" | "prompt-start" | "prompt-end"
 	content: string;
 	path?: string;
+	callbackId?: string;
 };
 
-function initWs() {
+type VscodeMessagePayload = {
+    event: "vscode_diff";
+    diff: string;
+}
+
+async function ensureFileExists(filePath: string, content: string = '') {
+	try {
+	  const uri = vscode.Uri.file(filePath);
+	  
+	  // Check if the directory exists, create if not
+	  const dirPath = path.dirname(filePath);
+	  try {
+		await vscode.workspace.fs.stat(vscode.Uri.file(dirPath));
+	  } catch {
+		// Directory doesn't exist, create it
+		await vscode.workspace.fs.createDirectory(vscode.Uri.file(dirPath));
+	  }
+  
+	  // Check if file exists
+	  try {
+		await vscode.workspace.fs.stat(uri);
+	  } catch {
+		// File doesn't exist, create it
+		await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+	  }
+  
+	  return uri;
+	} catch (error) {
+	  vscode.window.showErrorMessage(`Error ensuring file exists: ${error}`);
+	  throw error;
+	}
+  }
+  
+
+function initWs(context: vscode.ExtensionContext) {
 	// change to something else
-	const ws = new WebSocket(process.env.WS_RELAYER_URL || "ws://ws-relayer:9093");
+	const ws = new WebSocket(process.env.WS_RELAYER_URL || "ws://localhost:9093");
 	
 	ws.onerror = (e: any) => {
 		console.log("error", );
@@ -16,25 +53,55 @@ function initWs() {
 		console.log(JSON.stringify(e));
 	}
 
+	ws.onopen = () => {
+		ws.send(JSON.stringify({
+			event: "subscribe",
+			data: null
+		}));
+	}
+
 	ws.onmessage = async (e: any) => {
 		const data: AdminMessage = JSON.parse(e.data);
+		console.log('data');
 		console.log(data);
 		if (data.type === "command") {
-			vscode.commands.executeCommand('extension.sendToAiTerminal', data.content);
 			vscode.commands.executeCommand('extension.sendToAiTerminal', data.content);
 		}
 
 		if (data.type === "update-file") {
-			const document = await vscode.workspace.openTextDocument(data.path!);
-			// const editor = await vscode.window.showTextDocument(document);
+			const fileUri = await ensureFileExists(data.path!, data.content);
+
+			const document = await vscode.workspace.openTextDocument(fileUri);
+			await vscode.window.showTextDocument(document);
+
 			const edit = new vscode.WorkspaceEdit();
 			const range = new vscode.Range(
 				new vscode.Position(0, 0),
 				new vscode.Position(document.lineCount, 0)
 			);
 
-			edit.replace(document.uri, range, Math.random().toString());
+			edit.replace(document.uri, range, data.content);
 			await vscode.workspace.applyEdit(edit);
+		}
+
+		if (data.type === "prompt-start") {
+			const terminals = vscode.window.terminals;
+			if (terminals.length > 0) {
+				const activeTerminal = vscode.window.activeTerminal;
+				activeTerminal?.sendText('\x03');
+			}
+			// get response from git diff command silently and forward it via ws to the server
+			const diff = await vscode.commands.executeCommand('git diff');
+			ws.send(JSON.stringify({
+				event: "vscode_diff",
+				diff: diff,
+				callbackId: data.callbackId
+			}));
+		}
+
+		if (data.type === "prompt-end") {
+			vscode.commands.executeCommand('git add .');
+			vscode.commands.executeCommand('extension.sendToAiTerminal', "npm run dev");
 		}
 	}
 
@@ -43,13 +110,9 @@ function initWs() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-
-	console.log('Congratulations, your extension "bolty-listener" is now active!');
-
-	console.log("activate extension");
-	let ws = initWs();
+	let ws = initWs(context);
 	ws.onerror = (e) => {
-		initWs();	
+		initWs(context);	
 	};
 		
 	const aiTerminal = vscode.window.createTerminal({
@@ -65,7 +128,6 @@ export function activate(context: vscode.ExtensionContext) {
 	  
 	  // Pin the terminal (this requires the terminal tabs feature)
 	  vscode.commands.executeCommand('workbench.action.terminal.focus');
-	  vscode.commands.executeCommand('workbench.action.terminal.pin');
 	  
 	  // Register a command to send text to the AI terminal
 	  let sendToAiTerminal = vscode.commands.registerCommand('extension.sendToAiTerminal', async (text) => {

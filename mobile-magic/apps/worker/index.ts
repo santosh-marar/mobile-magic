@@ -4,7 +4,8 @@ import { prismaClient } from "db/client";
 import Anthropic from '@anthropic-ai/sdk';
 import { systemPrompt } from "./systemPrompt";
 import { ArtifactProcessor } from "./parser";
-import { onFileUpdate, onShellCommand } from "./os";
+import { onFileUpdate, onPromptEnd, onShellCommand } from "./os";
+import { RelayWebsocket } from "./ws";
 
 const app = express();
 app.use(cors());
@@ -13,14 +14,41 @@ app.use(express.json());
 app.post("/prompt", async (req, res) => {
   const { prompt, projectId } = req.body;
   const client = new Anthropic();
-  
-  await prismaClient.prompt.create({
+  const project = await prismaClient.project.findUnique({
+    where: {
+      id: projectId,
+    },
+  });
+
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+
+  const promptDb = await prismaClient.prompt.create({
     data: {
       content: prompt,
       projectId,
       type: "USER",
     },
   });
+
+  const { diff } = await RelayWebsocket.getInstance().sendAndAwaitResponse({
+    event: "admin",
+    data: {
+      type: "prompt-start",
+    }
+  }, promptDb.id);
+
+  if (diff) {
+    await prismaClient.prompt.create({
+      data: {
+        content: `<bolt-user-diff>${diff}</bolt-user-diff>\n\n$`,
+        projectId,
+        type: "USER",
+      },
+    });
+  }
 
   const allPrompts = await prismaClient.prompt.findMany({
     where: {
@@ -31,7 +59,7 @@ app.post("/prompt", async (req, res) => {
     },
   });
 
-  let artifactProcessor = new ArtifactProcessor("", (filePath, fileContent) => onFileUpdate(filePath, fileContent, projectId), (shellCommand) => onShellCommand(shellCommand, projectId));
+  let artifactProcessor = new ArtifactProcessor("", (filePath, fileContent) => onFileUpdate(filePath, fileContent, projectId, promptDb.id, project.type), (shellCommand) => onShellCommand(shellCommand, projectId, promptDb.id));
   let artifact = "";
 
   let response = client.messages.stream({
@@ -39,7 +67,7 @@ app.post("/prompt", async (req, res) => {
       role: p.type === "USER" ? "user" : "assistant",
       content: p.content,
     })),
-    system: systemPrompt,
+    system: systemPrompt(project.type),
     model: "claude-3-7-sonnet-20250219",
     max_tokens: 8000,
   }).on('text', (text) => {
@@ -61,8 +89,10 @@ app.post("/prompt", async (req, res) => {
       data: {
         content: "Done!",
         projectId,
+        promptId: promptDb.id,
       },
     });
+    onPromptEnd(promptDb.id);
   })
   .on('error', (error) => {
     console.log("error", error);
