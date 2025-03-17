@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { BACKEND_URL } from "@/config";
 import axios from "axios";
@@ -9,19 +9,29 @@ type Project = {
   createdAt: string;
 };
 
-export function useProjects() {
+export function useProjects(debouncedString: string) {
   const { getToken } = useAuth();
   const [projects, setProjects] = useState<{ [date: string]: Project[] }>({});
-  useEffect(() => {
-    (async () => {
+  const fetchProjects = useCallback(async () => {
+    try {
       const token = await getToken();
+      if (!token) return;
 
       const response = await axios.get(`${BACKEND_URL}/projects`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const projectsByDate = response.data.projects.reduce(
+
+      const filteredProjects = debouncedString
+        ? response.data.projects.filter((project: Project) =>
+            project.description
+              .toLowerCase()
+              .includes(debouncedString.toLowerCase())
+          )
+        : response.data.projects;
+
+      const projectsByDate = filteredProjects.reduce(
         (acc: { [date: string]: Project[] }, project: Project) => {
           const date = formatDate(project.createdAt);
           if (!acc[date]) {
@@ -33,8 +43,14 @@ export function useProjects() {
         {}
       );
       setProjects(projectsByDate);
-    })();
-  }, []);
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+    }
+  }, [getToken, debouncedString]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [debouncedString]);
 
   return projects;
 }

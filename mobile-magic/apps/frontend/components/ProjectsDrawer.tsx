@@ -11,27 +11,34 @@ import {
 import { SignedIn, useClerk, UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageSquareIcon, SearchIcon } from "lucide-react";
+import { MessageSquareIcon, SearchIcon, UmbrellaOff } from "lucide-react";
 import { Button } from "./ui/button";
 import { useProjects } from "@/hooks/useProject";
 import { Separator } from "./ui/separator";
 import { formatDate } from "@/utils/formatDate";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const WIDTH = 260;
 
 export function ProjectsDrawer() {
-  const projects = useProjects();
-  const [isOpen, setIsOpen] = useState(false);
   const [searchString, setSearchString] = useState("");
+  const debounceString = useDebounce(searchString, 1000);
+  const projects = useProjects(debounceString);
+  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const { user } = useUser();
+  let delayTimerId: Timer;
   useEffect(() => {
     // track mouse pointer, open if its on the left ovver the drawer
     const handleMouseMove = (e: MouseEvent) => {
       if (e.clientX < 40) {
-        setIsOpen(true);
+        clearTimeout(delayTimerId);
+        delayTimerId = setTimeout(() => {
+          setIsOpen(true);
+        }, 300);
       }
       if (e.clientX > WIDTH) {
+        clearTimeout(delayTimerId);
         setIsOpen(false);
       }
     };
@@ -39,6 +46,7 @@ export function ProjectsDrawer() {
     window.addEventListener("mousemove", handleMouseMove);
 
     return () => {
+      clearTimeout(delayTimerId);
       window.removeEventListener("mousemove", handleMouseMove);
     };
   }, []);
@@ -80,21 +88,21 @@ export function ProjectsDrawer() {
           </DrawerHeader>
 
           {/* Scrollable Projects List */}
-          <div className="flex-1 overflow-y-auto px-4 mb-1 custom-scrollbar">
-            {Object.keys(projects).map((date) => {
-              const formattedDate = formatDate(date);
-              return (
-                <div key={date} className="mb-4">
-                  <h2 className="text-sm font-semibold text-neutral-700 py-1">
-                    {formattedDate}
-                  </h2>
-                  {projects[date]
-                    .filter((project) =>
-                      project.description
-                        .toLowerCase()
-                        .includes(searchString.toLowerCase())
-                    )
-                    .map((project) => (
+          {Object.keys(projects).length === 0 ? (
+            <div className="flex flex-col justify-center w-full items-center mt-4 gap-y-4 ">
+              <UmbrellaOff size={50} opacity={0.5} />
+              <p className="">No projects found</p>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto px-4 mb-1 custom-scrollbar">
+              {Object.keys(projects).map((date) => {
+                const formattedDate = formatDate(date);
+                return (
+                  <div key={date} className="mb-4">
+                    <h2 className="text-sm font-semibold text-neutral-700 py-1">
+                      {formattedDate}
+                    </h2>
+                    {projects[date].map((project) => (
                       <div
                         key={project.id}
                         onClick={() => {
@@ -107,10 +115,11 @@ export function ProjectsDrawer() {
                           : project.description}
                       </div>
                     ))}
-                </div>
-              );
-            })}
-          </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           <DrawerFooter className="p-2 bg-neutral-900 rounded-br-4xl shadow-xl ">
             <div className="py-2 flex items-center  gap-4">
